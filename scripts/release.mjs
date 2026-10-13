@@ -47,7 +47,9 @@ const step = (n, s) => console.log(`\n[${n}] ${s}`)
 const fail = (s) => { console.error('\n✗ ' + s); process.exit(1) }
 
 function run(cmd, args, opts = {}) {
-  const r = spawnSync(cmd, args, { encoding: 'utf8', cwd: ROOT, ...opts })
+  /* 注意：opts 要覆盖默认 cwd，不能写成 {...opts, cwd: ROOT}（那会吞掉调用方传的 cwd） */
+  const { cwd = ROOT, ...rest } = opts
+  const r = spawnSync(cmd, args, { encoding: 'utf8', ...rest, cwd })
   return { code: r.status ?? -1, out: String(r.stdout || ''), err: String(r.stderr || ''), all: String((r.stdout || '') + (r.stderr || '')) }
 }
 function git(args, opts) { return run('git', args, opts) }
