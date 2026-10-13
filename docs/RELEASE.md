@@ -52,9 +52,52 @@ dsh plugin --profile desktop remove dsh-edict
 
 ## 3. 发布 npm
 
+> ### ⚠️ 首次发布踩过的坑（务必先读）
+>
+> npm 从 2026 年起收紧发布策略，**"绕过 2FA 的 granular token"被限制**（[官方说明](https://gh.io/npm-gat-bypass2fa-deprecation)）。实测行为：
+>
+> | 现象 | 原因 | 解法 |
+> |---|---|---|
+> | `npm publish` 报 `E403 Two-factor authentication or granular access token with bypass 2fa enabled is required` | 用 `npm login --auth-type=web` 得到的 token 没有 2FA bypass，且**不会提示输 OTP** | 用带 **Bypass 2FA** 的 Granular Access Token |
+> | 发布后线上出现 `0.0.0-stage` 占位版本，`latest` 指向它 | 新包首次发布被 npm 转成 **staged publish**（延后 2FA 证明），真实版本被扣住 | 见下：重打 `latest` 标签 + 直发新版本号 |
+> | `npm unpublish` 报 `403 ... may not perform this action` | bypass-2FA token **被禁止删除版本/包** | 只能去 npm 网页版删（72 小时内） |
+> | `E409 Cannot publish over previously staged version "x.y.z"` | 该版本号已被暂存记录占住 | **换一个版本号**重发 |
+> | `https://www.npmjs.com/settings/<user>/staged-packages` 是空的，但确实卡住了 | 暂存记录未挂到用户可见队列 | 不用管，换版本号直发即可 |
+>
+> **一次成功的路径**（本次实际走通）：
+> 1. 建 **Granular Access Token**：勾 **Bypass 2FA**，Permissions = `Read and write (publish and stage)`，Expiration = 7 days
+> 2. 若包名已有占位版本（如 `0.0.0-stage`），**把 package.json 版本换一个号**（例：`0.1.0` → `0.1.1`）再 `npm publish --access public`
+> 3. 把 `latest` 指向真版本（命令行 `npm dist-tag` 需要 OTP，改用 API）：
+>    ```bash
+>    curl -X PUT "https://registry.npmjs.org/-/package/<包名>/dist-tags/latest" \
+>      -H "Authorization: Bearer <npm_token>" -H "Content-Type: application/json" \
+>      -d '"0.1.0"'      # 成功返回 204
+>    ```
+> 4. 验证：`npm view <包名> dist-tags` 应显示 `latest: <真版本>`，且 `npm view <包名>@<版本> dsh` 有 `bundle.patch`
+> 5. 用完**立刻删掉 token**（npm 网页 → Access Tokens → Delete）
+>
+> **占位版本 `0.0.0-stage` 建议去网页删掉**：https://www.npmjs.com/package/<包名> → Settings → Delete package
+
 ```bash
-npm login          # 首次
-npm publish        # 若包名被占用，改成 @<你的scope>/dsh-edict 并同步改 cordis.patch.yml 与 README
+npm login            # 或用上面那种 token
+npm publish --access public
+```
+
+发布后核对：
+
+```bash
+npm view dsh-edict dist-tags            # latest 必须指向真版本
+npm view dsh-edict@<版本> dsh           # 应输出 { bundle: { patch: './cordis.patch.yml' }, client: {...} }
+npm view dsh-edict@<版本> dist.fileCount  # 应为 11
+```
+
+**最长验一步（推荐）**：下载线上 tarball 并跑一遍核心逻辑，确认发出去的不是空壳：
+
+```bash
+curl -sL "$(npm view dsh-edict dist.tarball)" -o /tmp/p.tgz
+tar -xzf /tmp/p.tgz -C /tmp && ls /tmp/package/lib
+node -e "import('/tmp/package/lib/core.mjs').then(m=>console.log(Object.keys(m.STATE_TRANSITIONS).length, m.HIGH_RISK_TRANSITIONS.length))"
+# 期望输出：12 3
 ```
 
 ## 4. 发布 GitHub
