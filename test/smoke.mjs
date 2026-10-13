@@ -93,13 +93,13 @@ for (const def of plugin.buildTools()) {
 console.log('✓ 15 个工具均声明 output { schema, render } 与 execute')
 
 /* ★ 回归守卫 2：看板路由必须注册（否则独立看板返回裸 401） */
-for (const p of ['/edict', '/edict/board', '/edict/audit', '/edict/task']) {
+for (const p of ['/edict', '/edict/board', '/edict/audit', '/edict/task', '/edict/url']) {
   if (!registeredRoutes.includes(p)) {
     console.error(`✗ 看板路由未注册: ${p}`)
     process.exit(1)
   }
 }
-console.log('✓ 4 条看板路由齐全')
+console.log('✓ 5 条看板路由齐全')
 
 const call = (name, args) => registeredTools.get(name).execute(args)
 
@@ -231,11 +231,11 @@ console.log(`✓ 角色切换落盘：${role.role}`)
     console.error(`✗ 服务就绪后补注册失败（应为 15，实际 ${registeredTools.size}）`)
     process.exit(1)
   }
-  if (registeredRoutes.length - savedRoutes !== 4) {
+  if (registeredRoutes.length - savedRoutes !== 5) {
     console.error('✗ 服务就绪后看板路由未补注册')
     process.exit(1)
   }
-  console.log('✓ 服务晚到时靠 internal/service 事件补注册成功（15 工具 + 4 路由）')
+  console.log('✓ 服务晚到时靠 internal/service 事件补注册成功（15 工具 + 5 路由）')
   registeredTools.clear()
   for (const [k, v] of savedTools) registeredTools.set(k, v)
 }
