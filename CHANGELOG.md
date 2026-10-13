@@ -2,6 +2,18 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.6] — 2026-10-14
+
+### 修复
+
+- `/edict/url` 用错了 `connection.authenticatedUrl` 的签名。真实签名（从 `dsh-host-frontend-static` 挖出）是
+  传**完整 base URL** 并返回带凭据的 URL 字符串：
+  `js
+  ctx.connection.authenticatedUrl( + "http://127.0.0.1:" + )
+  `
+  旧代码按 `(req, path)` 调用，必然拿不到结果。现在改为：取 `webServer.port`/Host 头拼 base URL →
+  交给 `authenticatedUrl` → 用 `URL` 解析后把 pathname 换成 `/edict`、**保留其附带的凭据查询串**。
+
 ## [0.1.5] — 2026-10-14
 
 ### 修复
