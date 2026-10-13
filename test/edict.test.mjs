@@ -155,11 +155,13 @@ test('文本清洗：剥离路径/URL/元数据/传旨前缀', () => {
   assert.equal(sanitizeText('a'.repeat(100), 10), 'aaaaaaaaaa…')
 })
 
-test('标题校验：长度 ≥6 且不吃闲聊词', () => {
+test('标题校验：长度 ≥6 且不吃闲聊词（垃圾词比较与上游一致，不忽略大小写）', () => {
   assert.equal(isValidTaskTitle('短'), false)
   assert.equal(isValidTaskTitle('收到'), false)
   assert.equal(isValidTaskTitle('测试'), false)
-  assert.equal(isValidTaskTitle('OK'), false, '垃圾词比较应忽略大小写')
+  // 上游是集合精确匹配：'收到收到收到' 含垃圾词「收到」但并非精确相等，
+  // 且长度 ≥6，因此会被放行——本移植刻意保持一致，没有"顺手修好"
+  assert.equal(isValidTaskTitle('收到收到收到'), true)
   assert.equal(isValidTaskTitle('实现三人省六部审核插件'), true)
 })
 

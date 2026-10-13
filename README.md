@@ -140,15 +140,18 @@ dsh plugin --profile desktop add dsh-edict
 
 ## 与本移植的差异（诚实清单）
 
-规则是一致的，适配层有三处必然差异，另有两处**行为增强**：
+规则一致，适配层有三处必然差异，另有两处**实现层差异**（语言/内部一致性问题，非规则改动）：
 
-| 项 | 原版 | 本移植 | 性质 |
+| 项 | 原版 edict | 本移植 | 性质 |
 |---|---|---|---|
 | 身份来源 | `OPENCLAW_AGENT_ID` 等环境变量 | 同上 + 工具参数 + 角色文件 | 适配（DSH 无 per-subagent env） |
 | 存储 | kanban JSON / Postgres 双写 | `~/.dsh/edict/` JSON 原子写 | 适配 |
 | 多 Agent | 11 个 OpenClaw agent 进程 | DSH 子代理 / 人工扮演 | 适配 |
-| `progress` 替换 todos 后 | **不重算** `ready_to_close` | **重算**，保持标记与 todos 一致 | 增强（上游内部不一致） |
-| `parseTodosPipe` | `item[:-1]` 截断 | 按码位删除（emoji 是代理对，原写法会留半字符） | 增强（上游在 JS 之外的实现无此问题） |
+| todos 清单解析 | Python `item[:-1]`（按码位） | `Array.from` 后删末位（按码位） | **语言差异**：JS 里 `slice(0,-1)` 会切断 emoji 代理对，故必须按码位处理 |
+| `progress` 替换 todos 后 | 不重算 `ready_to_close`（`cmd_todo` 才置位） | **重算**，保持标记与 todos 一致 | 实现增强（上游内部不一致） |
+
+> 另：垃圾词比较**刻意保持上游行为**——上游 `if t in _JUNK_TITLES` 是集合精确匹配、不忽略大小写，
+> 因此 `'OK'`/`'Yes'` 这类大小写变体不会被拦。本移植没有"顺手修好"它，以对齐上游。
 
 ## 测试
 

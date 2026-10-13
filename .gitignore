@@ -7,3 +7,5 @@ data/
 Thumbs.db
 .vscode/
 .idea/
+# Windows 保留设备名：git 的 ssh 调用若把 /dev/null 当普通路径，会生成同名的怪文件
+NUL
