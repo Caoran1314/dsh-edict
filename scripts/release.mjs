@@ -295,14 +295,32 @@ else {
       log('  ✓ 已加入 pnpm 最小发布年龄白名单')
     }
   }
-  /* Windows 上 Node 无法直接 spawn .cmd/.bat（会 EINVAL），必须经 cmd.exe。
-     引号交给 Node 处理（不要把引号写进参数里，否则会变成 '"path"'）。 */
-  const pnpmBin = fs.existsSync(PNPM) ? PNPM : null
-  const r = pnpmBin
-    ? run('cmd.exe', ['/d', '/s', '/c', pnpmBin, 'install', '--config.minimumReleaseAge=1'], { cwd: PROFILE_DIR })
-    : run('pnpm', ['install', '--config.minimumReleaseAge=1'], { cwd: PROFILE_DIR })
-  if (r.code !== 0 && !/another program|os error 32|EPERM|being used by another process/i.test(r.all)) {
-    fail('profile 安装失败（cwd=' + PROFILE_DIR + '）\n' + (r.all || '(无输出)').slice(-800))
+  /* Windows 上要经 cmd.exe 调 pnpm.cmd（Node 直接 spawn .cmd 会 EINVAL）；
+     引号交给 Node（不要把引号写进参数里）。
+     注意：pnpm 的错误在 **stdout** 而非 stderr，判定必须看 r.all。 */
+  const pnpmExe = fs.existsSync(PNPM)
+    ? '"' + PNPM.replace(/"/g, '') + '"'
+    : 'pnpm'
+  const r = run('cmd.exe', ['/d', '/s', '/c', `${pnpmExe} install --config.minimumReleaseAge=1`], { cwd: PROFILE_DIR })
+
+  const eperm = /EPERM|being used by another process|os error 32/i.test(r.all)
+  if (r.code !== 0 && !eperm) {
+    fail('profile 安装失败（cwd=' + PROFILE_DIR + '）\n' + (r.all || '(无输出)').slice(-900))
+  }
+  if (eperm) {
+    /* 典型场景：DSH 正开着，pnpm 想换出某插件目录时被文件锁挡住，
+       会把那个插件目录删空（见 dsh-plugin-authoring 技能 5.1）。自动修复。 */
+    const victim = (r.all.match(/node_modules[\\/]([^\\/\s]+)/) || [])[1]
+    log(`  ⚠️ pnpm 被运行中的 DSH 文件锁挡住${victim ? `（${victim}）` : ''}`)
+    if (victim) {
+      const dir = path.join(PROFILE_DIR, 'node_modules', victim)
+      const files = fs.existsSync(dir) ? fs.readdirSync(dir).length : 0
+      if (fs.existsSync(dir) && files === 0) {
+        fs.rmSync(dir, { recursive: true, force: true })
+        log(`  ✓ 已清理被删空的目录 ${victim}（重启 DSH 后会由 pnpm 重装，或关掉 DSH 后重跑本脚本）`)
+      }
+    }
+    log('  ⚠️ 请【先退出 DSH】再重跑本脚本，才能把新版本真正装进 profile')
   }
   const installed = path.join(PROFILE_DIR, 'node_modules', ...pkg.name.split('/'), 'package.json')
   if (fs.existsSync(installed)) log(`  ✓ 已装: v${readJson(installed).version}`)
