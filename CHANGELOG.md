@@ -2,6 +2,20 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.7] — 2026-10-14
+
+### 修复
+
+- **工具调用报 `returned invalid output: value is not lossless JSON`**。
+  任务对象的可选字段（如 `active[].org`、`now`、`remark`）常为 `undefined`，
+  而宿主对工具返回值做 **lossless JSON** 校验，遇到 `undefined` 直接判为非法（`JSON.stringify` 会静默丢弃，
+  所以本地自测发现不了）。
+  新增 `toLossless()` 深度清洗：剥掉 `undefined`（字段整体删除）、`function`/`symbol` → `null`、
+  `bigint` → 字符串、`Date` → ISO、`Buffer` → utf8、`NaN`/`Infinity` → `null`、检测循环引用。
+  在 `execute` 出口与 `render` 两处生效。
+
+> 这个缺陷是**作者自己调用工具时发现的** —— 说明"发布后真用一遍"比任何自测都重要。
+
 ## [0.1.6] — 2026-10-14
 
 ### 修复
