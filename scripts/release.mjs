@@ -295,12 +295,14 @@ else {
       log('  ✓ 已加入 pnpm 最小发布年龄白名单')
     }
   }
-  /* Windows 上调用 pnpm：不要用 cmd /c + 嵌套引号（会变成 '"path"' 不是有效命令）。
-     直接 spawn pnpm.cmd，args 由 Node 处理转义。 */
-  const pnpmBin = fs.existsSync(PNPM) ? PNPM : 'pnpm'
-  const r = run(pnpmBin, ['install', '--config.minimumReleaseAge=1'], { cwd: PROFILE_DIR })
+  /* Windows 上 Node 无法直接 spawn .cmd/.bat（会 EINVAL），必须经 cmd.exe。
+     引号交给 Node 处理（不要把引号写进参数里，否则会变成 '"path"'）。 */
+  const pnpmBin = fs.existsSync(PNPM) ? PNPM : null
+  const r = pnpmBin
+    ? run('cmd.exe', ['/d', '/s', '/c', pnpmBin, 'install', '--config.minimumReleaseAge=1'], { cwd: PROFILE_DIR })
+    : run('pnpm', ['install', '--config.minimumReleaseAge=1'], { cwd: PROFILE_DIR })
   if (r.code !== 0 && !/another program|os error 32|EPERM|being used by another process/i.test(r.all)) {
-    fail('profile 安装失败\n' + r.all.slice(-800))
+    fail('profile 安装失败（cwd=' + PROFILE_DIR + '）\n' + (r.all || '(无输出)').slice(-800))
   }
   const installed = path.join(PROFILE_DIR, 'node_modules', ...pkg.name.split('/'), 'package.json')
   if (fs.existsSync(installed)) log(`  ✓ 已装: v${readJson(installed).version}`)
