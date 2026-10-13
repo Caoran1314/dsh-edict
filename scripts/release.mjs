@@ -295,13 +295,17 @@ else {
       log('  ✓ 已加入 pnpm 最小发布年龄白名单')
     }
   }
-  /* Windows 上要经 cmd.exe 调 pnpm.cmd（Node 直接 spawn .cmd 会 EINVAL）；
-     引号交给 Node（不要把引号写进参数里）。
-     注意：pnpm 的错误在 **stdout** 而非 stderr，判定必须看 r.all。 */
-  const pnpmExe = fs.existsSync(PNPM)
-    ? '"' + PNPM.replace(/"/g, '') + '"'
-    : 'pnpm'
-  const r = run('cmd.exe', ['/d', '/s', '/c', `${pnpmExe} install --config.minimumReleaseAge=1`], { cwd: PROFILE_DIR })
+  /* 调 pnpm 的可靠方式：用 node 跑 pnpm 的入口 .mjs。
+     （Windows 上 Node 直接 spawn .cmd 会 EINVAL；cmd /c 的引号在 Node 里转义不可靠。）
+     ⚠️ pnpm 的错误输出在 **stdout**，判定必须看 r.all 而不是 r.err。 */
+  const PNPM_MJS = [
+    'C:/Users/oll/AppData/Local/Programs/DeepSeek Harness/resources/runtime/pnpm/bin/pnpm.mjs',
+    'C:/Users/oll/AppData/Local/Programs/DeepSeek Harness/resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.mjs'
+  ].find((p) => fs.existsSync(p))
+
+  const r = PNPM_MJS
+    ? run(NODE, [PNPM_MJS, 'install', '--config.minimumReleaseAge=1'], { cwd: PROFILE_DIR })
+    : run('pnpm', ['install', '--config.minimumReleaseAge=1'], { cwd: PROFILE_DIR, shell: true })
 
   const eperm = /EPERM|being used by another process|os error 32/i.test(r.all)
   if (r.code !== 0 && !eperm) {
