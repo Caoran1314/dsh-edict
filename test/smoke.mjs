@@ -7,6 +7,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dsh-edict-smoke-'))
 
@@ -127,6 +128,41 @@ if (!fs.existsSync(roleFile) || fs.readFileSync(roleFile, 'utf8').trim() !== 'me
   console.error('✗ 角色文件未写入'); process.exit(1)
 }
 console.log(`✓ 角色切换落盘：${role.role}`)
+
+/* ── 回归守卫：声明了 dsh.client 就必须导出 "./client" ────────────────
+   真实事故：package.json 声明 dsh.client，但 exports 漏了 "./client"，导致 DSH 启动时
+   ClientModuleRegistry 抛 "declares dsh.client but exports no \"./client\" bundle"，
+   整个 app 启动失败并触发自愈、把所有插件层清空。这条测试专门盯住它。 */
+{
+  const pkgUrl = new URL('../package.json', import.meta.url)
+  const pkgDir = path.dirname(fileURLToPath(pkgUrl))
+  const pkg = JSON.parse(fs.readFileSync(pkgUrl, 'utf8'))
+  if (pkg.dsh?.client) {
+    const clientExport = pkg.exports?.['./client']
+    if (!clientExport) {
+      console.error('✗ 致命：dsh.client 已声明，但 exports 缺少 "./client"')
+      console.error('  这会让 DSH 启动失败并清空所有插件层（曾真实发生过）')
+      process.exit(1)
+    }
+    const clientPath = path.resolve(pkgDir, clientExport)
+    if (!fs.existsSync(clientPath)) {
+      console.error(`✗ 致命：exports["./client"] 指向的文件不存在: ${clientExport}`)
+      process.exit(1)
+    }
+    const src = fs.readFileSync(clientPath, 'utf8')
+    if (!src.includes('__ModuleLoader__')) {
+      console.error('✗ exports["./client"] 不是手写 ModuleLoader bundle')
+      process.exit(1)
+    }
+    if (!src.includes(`id: '${pkg.name}'`) && !src.includes(`id: "${pkg.name}"`)) {
+      console.error(`✗ client bundle 的注册 id 与包名不一致（应为 ${pkg.name}）`)
+      process.exit(1)
+    }
+    console.log(`✓ dsh.client 与 exports["./client"] 配套完整（${clientExport}，id=${pkg.name}）`)
+  } else {
+    console.log('· 未声明 dsh.client，跳过客户端 bundle 校验')
+  }
+}
 
 fs.rmSync(dir, { recursive: true, force: true })
 console.log('\n冒烟测试全部通过 ✅')

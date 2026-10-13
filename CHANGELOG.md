@@ -2,6 +2,33 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.2] — 2026-10-13
+
+### 修复（致命）
+
+- **`package.json` 的 `exports` 缺少 `"./client"`**，而 `dsh.client` 已声明。
+  DSH 启动时 `ClientModuleRegistry` 会抛：
+
+  ```
+  dsh-edict declares dsh.client but exports no "./client" bundle
+  ```
+
+  这会导致 **整个 app 启动失败**，并触发 DSH 的自愈逻辑把 profile 里**所有插件层清空**。
+  0.1.0 与 0.1.1 都带此缺陷，**请勿使用，直接用 0.1.2 及以上**。
+
+### 新增
+
+- `test/smoke.mjs` 增加**回归守卫**：校验 `dsh.client` 与 `exports["./client"]` 配套、
+  目标文件存在、且 client bundle 的 `ModuleLoader` 注册 id 等于包名。
+
+## [0.1.1] — 2026-10-13
+
+### 变更
+
+- 版本号从 0.1.0 提升（npm 首次发布被转成 staged publish，`latest` 标签一度被占位版本占用）。
+
+> ⚠️ 0.1.1 与 0.1.0 一样带有 `exports` 缺少 `"./client"` 的致命缺陷，**不要使用**。
+
 ## [0.1.0] — 2026-10-13
 
 首个版本：把 [edict](https://github.com/cft0808/edict)（OpenClaw 三省六部制多智能体编排）的**审核流程逻辑**移植为 DeepSeek Harness 插件。
