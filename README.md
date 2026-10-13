@@ -2,6 +2,10 @@
 
 **三省六部制多智能体审核流程，移植为 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 插件。**
 
+[![npm version](https://img.shields.io/npm/v/dsh-edict?color=cb3837&label=npm)](https://www.npmjs.com/package/dsh-edict)
+[![license](https://img.shields.io/npm/l/dsh-edict?color=3fbf6f)](LICENSE)
+[![DeepSeek Harness](https://img.shields.io/badge/DeepSeek%20Harness-plugin-4b8bf5)](https://github.com/deepseek-ai/deepseek-harness)
+
 > 玩法来自 [**cft0808/edict**](https://github.com/cft0808/edict)（MIT，★16k+）：用 1300 年前的三省六部制重新设计多 Agent 协作。
 > 本插件是它**审核流程逻辑的忠实移植**——状态机、封驳规则、高风险确认、越权矩阵、委派防死锁、审计留痕，逐条对齐。
 >
@@ -77,11 +81,27 @@ Pending → Taizi → Zhongshu → Menxia → Assigned → Next/Doing → Review
 
 ## 安装
 
+**从 npm 装**（推荐，一行）：
+
 ```bash
 dsh plugin --profile desktop add dsh-edict
 ```
 
+**从 GitHub 装**（想跟最新提交，或 npm 不可用时）：
+
+```bash
+dsh plugin --profile desktop add github:Caoran1314/dsh-edict
+```
+
+**本地开发**（改代码即时生效，无需重装）：
+
+```bash
+dsh plugin --profile desktop add link:D:\path\to\dsh-edict
+```
+
 装完重启 DSH。数据目录 `~/.dsh/edict/`。
+
+> `--profile` 填你实际在用的那个：桌面客户端用 `desktop`，`dsh web` 用 `web`。
 
 ## 提供的工具
 
