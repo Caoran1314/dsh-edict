@@ -293,8 +293,13 @@ else {
       log('  ✓ 已加入 pnpm 最小发布年龄白名单')
     }
   }
-  const r = run('cmd.exe', ['/c', `"${PNPM}" install --config.minimumReleaseAge=1`], { cwd: PROFILE_DIR })
-  if (r.code !== 0 && !/another program|os error 32|EPERM/i.test(r.all)) fail('profile 安装失败\n' + r.all.slice(-800))
+  /* Windows 上调用 pnpm：不要用 cmd /c + 嵌套引号（会变成 '"path"' 不是有效命令）。
+     直接 spawn pnpm.cmd，args 由 Node 处理转义。 */
+  const pnpmBin = fs.existsSync(PNPM) ? PNPM : 'pnpm'
+  const r = run(pnpmBin, ['install', '--config.minimumReleaseAge=1'], { cwd: PROFILE_DIR })
+  if (r.code !== 0 && !/another program|os error 32|EPERM|being used by another process/i.test(r.all)) {
+    fail('profile 安装失败\n' + r.all.slice(-800))
+  }
   const installed = path.join(PROFILE_DIR, 'node_modules', ...pkg.name.split('/'), 'package.json')
   if (fs.existsSync(installed)) log(`  ✓ 已装: v${readJson(installed).version}`)
   else log('  ⚠️ 未在 node_modules 找到（可能被运行中的 DSH 文件锁挡住，退出 DSH 后重跑）')
