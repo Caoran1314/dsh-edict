@@ -2,6 +2,27 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.3] — 2026-10-14
+
+### 修复（严重）
+
+- **15 个工具全部注册失败、看板路由全部未注册**（表现：独立看板返回裸 401、`edict_*` 工具不存在）。
+  两个独立原因，都源于与宿主服务时序的假设错误：
+  1. 工具**缺少必需的 `output { schema, render }`** —— 宿主 `tools.register()` 会抛出
+     `tool "x" must declare output { schema, render, presentationMeta? }`，
+     而该异常被**静默吞掉**，完全没有报错。现已统一由 `withOutput()` 补齐。
+  2. `apply()` 执行时 `tools` / `webServer` 服务**尚未就绪**，旧代码取不到就永久放弃。
+     现改为监听 `internal/service` 事件 + 1.5 秒定时重试双保险。
+- `edict_role` 之前用错误的 store 实例（模块变量未在 apply 中赋值），导致角色文件写不到配置的数据目录。
+
+### 新增
+
+- `~/.dsh/edict/last-load.json`：记录每次加载的 `tools` / `routes` 数量，便于区分
+  "插件没加载" 与 "加载了但没注册"。
+- 冒烟测试新增 3 条回归守卫：每个工具必须有 `output { schema, render }` 与 `execute`；
+  4 条看板路由必须注册；**服务晚到时必须能补注册**。
+- 冒烟测试的 mock 宿主改为符合真实契约（`ctx.get('tools')` + `ctx.effect` + `internal/service` 事件）。
+
 ## [0.1.2] — 2026-10-13
 
 ### 修复（致命）

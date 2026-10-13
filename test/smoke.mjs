@@ -1,8 +1,14 @@
 /**
- * 冒烟测试：用 mock ctx 加载插件宿主半侧，验证
- *   1) 15 个工具 + 3 个命令都能注册
+ * 冒烟测试：按**真实宿主契约**用 mock ctx 加载插件宿主半侧，验证
+ *   1) 15 个工具 + 3 个命令 + 4 条看板路由都能注册
  *   2) 通过工具 handler 真的能跑完一条旨意（含封驳与高风险确认）
- * 不依赖真实 DSH 运行时，可在沙箱内直接跑。
+ *   3) 服务晚到时能靠 internal/service 事件补注册（真实踩坑点）
+ *
+ * 真实契约（从可用的 dsh-whale-market 与实测读出）：
+ *   ctx.get('tools') / ctx.get('webServer')      —— 服务要用 get，ctx 属性是隐藏的
+ *   ctx.effect(() => service.register(x))        —— 注册必须包在 effect 里
+ *   工具必须声明 output { schema, render }        —— 缺了会被静默拒绝
+ *   apply() 时服务可能未就绪 → 监听 internal/service + 定时重试
  */
 import fs from 'node:fs'
 import os from 'node:os'
@@ -13,30 +19,52 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dsh-edict-smoke-'))
 
 const registeredTools = new Map()
 const registeredCommands = new Map()
+const registeredRoutes = []
 
-const ctx = {
-  logger: { info: () => {}, warn: () => {} },
-  tools: {
-    register(def) {
-      // 兼容 {name, description, parameters, execute} 形态
-      if (!def || !def.name) return false
-      registeredTools.set(def.name, def)
-      return true
-    }
-  },
-  commands: {
-    register(def) {
-      if (!def || !def.name) return false
-      registeredCommands.set(def.name, def)
-      return true
+/** 造一个符合真实契约的 mock 宿主；toolsReady=false 用于测"服务晚到" */
+function makeHost({ toolsReady = true } = {}) {
+  let toolsService = toolsReady
+    ? { register: (d) => { if (!d?.name) return false; registeredTools.set(d.name, d); return true } }
+    : null
+  let webService = toolsReady
+    ? { register: (spec) => { registeredRoutes.push(spec.path); return () => {} } }
+    : null
+  const listeners = []
+
+  const ctx = {
+    logger: { info: () => {}, warn: () => {} },
+    get: (k) => (k === 'tools' ? toolsService
+      : k === 'webServer' ? webService
+        : k === 'connection' ? { requestRejection: () => null }
+          : undefined),
+    effect: (fn) => { fn(); return () => {} },
+    on: (evt, fn) => { listeners.push(fn) },
+    commands: {
+      register(def) {
+        if (!def || !def.name) return false
+        registeredCommands.set(def.name, def)
+        return true
+      }
     }
   }
+
+  /* 模拟宿主晚些时候广播服务就绪 */
+  const fireService = (name = 'tools') => {
+    toolsService = { register: (d) => { if (!d?.name) return false; registeredTools.set(d.name, d); return true } }
+    webService = { register: (spec) => { registeredRoutes.push(spec.path); return () => {} } }
+    for (const fn of listeners) fn(name)
+  }
+
+  return { ctx, fireService }
 }
 
 const plugin = await import('../lib/index.js')
-plugin.apply(ctx, { dataDir: dir })
 
-console.log(`注册工具 ${registeredTools.size} 个，命令 ${registeredCommands.size} 个`)
+/* ── 场景 A：服务已就绪 ── */
+const hostA = makeHost({ toolsReady: true })
+const resultA = plugin.apply(hostA.ctx, { dataDir: dir })
+console.log(`注册工具 ${registeredTools.size} 个，命令 ${registeredCommands.size} 个，路由 ${registeredRoutes.length} 条`)
+
 const expectedTools = [
   'edict_create', 'edict_move', 'edict_flow', 'edict_progress', 'edict_todo',
   'edict_done', 'edict_block', 'edict_confirm', 'edict_delegate',
@@ -49,6 +77,29 @@ if (missing.length) {
   process.exit(1)
 }
 console.log('✓ 15 个工具齐全')
+
+/* ★ 回归守卫 1：每个工具必须声明 output { schema, render }
+   曾因缺它导致 15 个工具全被静默拒绝（表现：看板路由裸 401、工具全无） */
+for (const def of plugin.buildTools()) {
+  if (!def.output?.schema || typeof def.output.render !== 'function') {
+    console.error(`✗ 工具 ${def.name} 缺少 output { schema, render } —— DSH 会静默拒绝注册`)
+    process.exit(1)
+  }
+  if (typeof def.execute !== 'function') {
+    console.error(`✗ 工具 ${def.name} 缺少 execute`)
+    process.exit(1)
+  }
+}
+console.log('✓ 15 个工具均声明 output { schema, render } 与 execute')
+
+/* ★ 回归守卫 2：看板路由必须注册（否则独立看板返回裸 401） */
+for (const p of ['/edict', '/edict/board', '/edict/audit', '/edict/task']) {
+  if (!registeredRoutes.includes(p)) {
+    console.error(`✗ 看板路由未注册: ${p}`)
+    process.exit(1)
+  }
+}
+console.log('✓ 4 条看板路由齐全')
 
 const call = (name, args) => registeredTools.get(name).execute(args)
 
@@ -163,6 +214,32 @@ console.log(`✓ 角色切换落盘：${role.role}`)
     console.log('· 未声明 dsh.client，跳过客户端 bundle 校验')
   }
 }
+
+/* ★ 回归守卫 3：服务晚到时必须能补注册（apply 时服务可能未就绪） */
+{
+  const savedTools = new Map(registeredTools)
+  const savedRoutes = registeredRoutes.length
+  registeredTools.clear()
+  const hostB = makeHost({ toolsReady: false })
+  const resultB = plugin.apply(hostB.ctx, { dataDir: dir })
+  if (resultB.registered !== 0) {
+    console.error('✗ 服务未就绪时不应注册到工具，实际 ' + resultB.registered)
+    process.exit(1)
+  }
+  hostB.fireService('tools')
+  if (registeredTools.size !== 15) {
+    console.error(`✗ 服务就绪后补注册失败（应为 15，实际 ${registeredTools.size}）`)
+    process.exit(1)
+  }
+  if (registeredRoutes.length - savedRoutes !== 4) {
+    console.error('✗ 服务就绪后看板路由未补注册')
+    process.exit(1)
+  }
+  console.log('✓ 服务晚到时靠 internal/service 事件补注册成功（15 工具 + 4 路由）')
+  registeredTools.clear()
+  for (const [k, v] of savedTools) registeredTools.set(k, v)
+}
+
 
 fs.rmSync(dir, { recursive: true, force: true })
 console.log('\n冒烟测试全部通过 ✅')

@@ -1,6 +1,6 @@
 {
   "name": "dsh-edict",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "三省六部制多智能体审核流程，移植为 DeepSeek Harness 插件：12 状态状态机、门下省封驳、高风险操作确认、越权矩阵、委派防死锁、完整审计。规则与 edict（OpenClaw）逐条对齐。",
   "keywords": [
     "dsh",
