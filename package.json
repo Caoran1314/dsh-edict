@@ -1,0 +1,50 @@
+{
+  "name": "dsh-edict",
+  "version": "0.1.0",
+  "description": "三省六部制多智能体审核流程，移植为 DeepSeek Harness 插件：12 状态状态机、门下省封驳、高风险操作确认、越权矩阵、委派防死锁、完整审计。规则与 edict（OpenClaw）逐条对齐。",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "edict",
+    "three-departments-six-ministries",
+    "multi-agent",
+    "orchestration",
+    "state-machine",
+    "workflow",
+    "audit"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./core": "./lib/core.mjs",
+    "./commands": "./lib/commands.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "docs",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node test/edict.test.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

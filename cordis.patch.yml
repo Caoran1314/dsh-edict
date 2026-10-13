@@ -1,0 +1,12 @@
+# dsh-edict — DSH bundle patch
+#
+# 把插件宿主半侧挂进当前 profile 的配置树。插件只注册工具与命令（无浏览器半侧），
+# 因此 package.json 里不声明 dsh.client。
+#
+# 安装（不手改 profile patch）：
+#   dsh plugin --profile desktop add dsh-edict
+# 本地开发安装：
+#   dsh plugin --profile desktop add link:D:\软件\dsh-edict
+- insert:
+    - id: dsh-edict
+      name: dsh-edict

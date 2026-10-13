@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 720" width="1180" height="720" font-family="'Cascadia Mono','SFMono-Regular',Consolas,'Microsoft YaHei',monospace">
+  <defs>
+    <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a8f98"/>
+    </marker>
+    <marker id="arw-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff5c5c"/>
+    </marker>
+    <marker id="arw-org" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff7500"/>
+    </marker>
+  </defs>
+
+  <rect width="1180" height="720" fill="#0d0f12"/>
+  <text x="34" y="52" fill="#f2f3f5" font-size="24" font-weight="700" letter-spacing="3">三省六部 · 任务状态机</text>
+  <text x="34" y="78" fill="#8a8f98" font-size="13" letter-spacing="1.6">dsh-edict · 与 edict (OpenClaw) task.py STATE_TRANSITIONS 逐条对齐</text>
+  <line x1="34" y1="96" x2="1146" y2="96" stroke="#242830" stroke-width="1"/>
+
+  <!-- ── 主链路 ── -->
+  <!-- Pending -->
+  <rect x="34" y="150" width="112" height="52" rx="4" fill="#151a21" stroke="#3a414d"/>
+  <text x="90" y="174" fill="#e6e8eb" font-size="15" text-anchor="middle" font-weight="600">Pending</text>
+  <text x="90" y="192" fill="#7d848e" font-size="10.5" text-anchor="middle">待分拣</text>
+
+  <!-- Taizi -->
+  <rect x="196" y="150" width="112" height="52" rx="4" fill="#151a21" stroke="#3a414d"/>
+  <text x="252" y="174" fill="#e6e8eb" font-size="15" text-anchor="middle" font-weight="600">Taizi</text>
+  <text x="252" y="192" fill="#7d848e" font-size="10.5" text-anchor="middle">太子 · 分拣</text>
+
+  <!-- Zhongshu -->
+  <rect x="358" y="150" width="112" height="52" rx="4" fill="#151a21" stroke="#3a414d"/>
+  <text x="414" y="174" fill="#e6e8eb" font-size="15" text-anchor="middle" font-weight="600">Zhongshu</text>
+  <text x="414" y="192" fill="#7d848e" font-size="10.5" text-anchor="middle">中书省 · 规划</text>
+
+  <!-- Menxia -->
+  <rect x="520" y="150" width="112" height="52" rx="4" fill="#1b1508" stroke="#ff7500" stroke-width="1.6"/>
+  <text x="576" y="174" fill="#ffd9a8" font-size="15" text-anchor="middle" font-weight="700">Menxia</text>
+  <text x="576" y="192" fill="#c99a5e" font-size="10.5" text-anchor="middle">门下省 · 审议</text>
+
+  <!-- Assigned -->
+  <rect x="682" y="150" width="112" height="52" rx="4" fill="#151a21" stroke="#3a414d"/>
+  <text x="738" y="174" fill="#e6e8eb" font-size="15" text-anchor="middle" font-weight="600">Assigned</text>
+  <text x="738" y="192" fill="#7d848e" font-size="10.5" text-anchor="middle">尚书省 · 派发</text>
+
+  <!-- Next / Doing -->
+  <rect x="682" y="252" width="112" height="46" rx="4" fill="#151a21" stroke="#3a414d"/>
+  <text x="738" y="272" fill="#e6e8eb" font-size="14" text-anchor="middle" font-weight="600">Next</text>
+  <text x="738" y="288" fill="#7d848e" font-size="10" text-anchor="middle">排队</text>
+
+  <rect x="520" y="252" width="112" height="46" rx="4" fill="#151a21" stroke="#3a414d"/>
+  <text x="576" y="272" fill="#e6e8eb" font-size="14" text-anchor="middle" font-weight="600">Doing</text>
+  <text x="576" y="288" fill="#7d848e" font-size="10" text-anchor="middle">六部 · 执行</text>
+
+  <!-- Review -->
+  <rect x="358" y="252" width="112" height="46" rx="4" fill="#151a21" stroke="#3a414d"/>
+  <text x="414" y="272" fill="#e6e8eb" font-size="14" text-anchor="middle" font-weight="600">Review</text>
+  <text x="414" y="288" fill="#7d848e" font-size="10" text-anchor="middle">尚书省 · 汇总</text>
+
+  <!-- PendingConfirm -->
+  <rect x="196" y="252" width="112" height="46" rx="4" fill="#1b1508" stroke="#ff7500" stroke-width="1.6"/>
+  <text x="252" y="270" fill="#ffd9a8" font-size="12.5" text-anchor="middle" font-weight="700">PendingConfirm</text>
+  <text x="252" y="287" fill="#c99a5e" font-size="9.5" text-anchor="middle">高风险 · 待确认</text>
+
+  <!-- Done -->
+  <rect x="34" y="355" width="112" height="50" rx="4" fill="#0e1a13" stroke="#3fbf6f" stroke-width="1.6"/>
+  <text x="90" y="378" fill="#b9f0cd" font-size="15" text-anchor="middle" font-weight="700">Done</text>
+  <text x="90" y="395" fill="#6fae88" font-size="10" text-anchor="middle">终态</text>
+
+  <!-- Cancelled -->
+  <rect x="196" y="355" width="112" height="50" rx="4" fill="#1c1012" stroke="#ff5c5c" stroke-width="1.6"/>
+  <text x="252" y="378" fill="#ffc9c9" font-size="15" text-anchor="middle" font-weight="700">Cancelled</text>
+  <text x="252" y="395" fill="#c07f7f" font-size="10" text-anchor="middle">终态</text>
+
+  <!-- Blocked -->
+  <rect x="34" y="470" width="112" height="50" rx="4" fill="#1a1710" stroke="#d9a441" stroke-width="1.4"/>
+  <text x="90" y="493" fill="#f0dcae" font-size="15" text-anchor="middle" font-weight="700">Blocked</text>
+  <text x="90" y="510" fill="#b39a6a" font-size="10" text-anchor="middle">阻塞 · 可回任意非终态</text>
+
+  <!-- ── 主链箭头 ── -->
+  <g stroke="#8a8f98" stroke-width="1.5" fill="none" marker-end="url(#arw)">
+    <line x1="146" y1="176" x2="192" y2="176"/>
+    <line x1="308" y1="176" x2="354" y2="176"/>
+    <line x1="470" y1="176" x2="516" y2="176"/>
+    <line x1="632" y1="176" x2="678" y2="176"/>
+    <line x1="738" y1="202" x2="738" y2="248"/>
+    <line x1="682" y1="275" x2="636" y2="275"/>
+    <line x1="520" y1="275" x2="474" y2="275"/>
+    <line x1="358" y1="275" x2="312" y2="275"/>
+    <line x1="196" y1="275" x2="106" y2="352"/>
+  </g>
+  <text x="160" y="168" fill="#6f7681" font-size="10" text-anchor="middle">分拣</text>
+  <text x="322" y="168" fill="#6f7681" font-size="10" text-anchor="middle">规划</text>
+  <text x="484" y="168" fill="#6f7681" font-size="10" text-anchor="middle">审议</text>
+  <text x="660" y="168" fill="#6f7681" font-size="10" text-anchor="middle">派发</text>
+  <text x="770" y="230" fill="#6f7681" font-size="10">执行</text>
+  <text x="662" y="266" fill="#6f7681" font-size="10" text-anchor="middle">Doing→Next 回退</text>
+  <text x="506" y="300" fill="#6f7681" font-size="10" text-anchor="middle">收口→汇总</text>
+  <text x="300" y="300" fill="#6f7681" font-size="10" text-anchor="middle">高风险</text>
+  <text x="120" y="330" fill="#6f7681" font-size="10">批准</text>
+
+  <!-- ── 门下省封驳（橙，回环）── -->
+  <path d="M 556 202 C 556 226, 480 230, 440 220" fill="none" stroke="#ff7500" stroke-width="1.8" marker-end="url(#arw-org)"/>
+  <text x="474" y="238" fill="#ff7500" font-size="11" font-weight="700" text-anchor="middle">封驳 · 打回重做</text>
+
+  <!-- ── Review → Menxia 复审 ── -->
+  <path d="M 380 252 C 380 232, 470 222, 528 212" fill="none" stroke="#ff7500" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arw-org)"/>
+  <text x="392" y="228" fill="#c99a5e" font-size="10">复审</text>
+
+  <!-- ── Doing → Done（不经 Review）── -->
+  <path d="M 520 288 C 300 288, 130 320, 96 352" fill="none" stroke="#8a8f98" stroke-width="1.4" stroke-dasharray="4 4" marker-end="url(#arw)"/>
+  <text x="268" y="333" fill="#6f7681" font-size="10" text-anchor="middle">Doing → Done 直通</text>
+
+  <!-- ── PendingConfirm → Done / Review ── -->
+  <g stroke="#ff7500" stroke-width="1.5" fill="none">
+    <path d="M 196 262 C 150 262, 110 300, 96 352" marker-end="url(#arw-org)"/>
+    <path d="M 308 275 C 330 275, 340 275, 352 275" marker-end="url(#arw-org)"/>
+  </g>
+  <text x="150" y="318" fill="#c99a5e" font-size="10">批准→目标态</text>
+  <text x="330" y="300" fill="#c99a5e" font-size="10" text-anchor="middle">驳回→Review</text>
+
+  <!-- ── Cancelled 入口（红）── -->
+  <g stroke="#ff5c5c" stroke-width="1.4" fill="none" marker-end="url(#arw-red)">
+    <path d="M 90 202 C 58 246, 46 310, 214 350"/>
+    <path d="M 576 298 C 500 344, 344 362, 314 377"/>
+  </g>
+  <text x="30" y="292" fill="#ff5c5c" font-size="10">任意态可取消</text>
+
+  <!-- ── Blocked 出边 ── -->
+  <path d="M 146 495 C 300 495, 560 470, 700 320" fill="none" stroke="#d9a441" stroke-width="1.4" stroke-dasharray="4 4" marker-end="url(#arw)"/>
+  <text x="330" y="488" fill="#b39a6a" font-size="10" text-anchor="middle">解除阻塞 → 回到接续点</text>
+
+  <!-- ── 高风险图例 ── -->
+  <rect x="700" y="380" width="446" height="200" rx="6" fill="#12151a" stroke="#242830"/>
+  <text x="722" y="408" fill="#f2f3f5" font-size="13" font-weight="700" letter-spacing="1.4">高风险转换 · 先落 PendingConfirm</text>
+  <g font-size="11.5">
+    <text x="722" y="436" fill="#c9ced6">Review → Done</text>
+    <text x="1000" y="436" fill="#ff7500">需 menxia 确认</text>
+    <text x="722" y="462" fill="#c9ced6">Doing → Cancelled</text>
+    <text x="1000" y="462" fill="#ff7500">需 shangshu 确认</text>
+    <text x="722" y="488" fill="#c9ced6">Menxia → Cancelled</text>
+    <text x="1000" y="488" fill="#ff7500">需 zhongshu 确认</text>
+  </g>
+  <line x1="722" y1="506" x2="1124" y2="506" stroke="#242830"/>
+  <g font-size="11">
+    <text x="722" y="530" fill="#8a8f98">批准 → 落到目标状态 · 驳回 → 退回 Review 复审</text>
+    <text x="722" y="552" fill="#8a8f98">非法转换一律拒绝，并写 state_rejected 审计</text>
+    <text x="722" y="572" fill="#8a8f98">do<i>ne</i> 前置：状态须 Doing/Next 且 todos 全完成</text>
+  </g>
+
+  <!-- ── 图例 ── -->
+  <g font-size="11">
+    <rect x="34" y="596" width="14" height="10" rx="2" fill="#151a21" stroke="#3a414d"/>
+    <text x="56" y="605" fill="#8a8f98">常规状态</text>
+    <rect x="146" y="596" width="14" height="10" rx="2" fill="#1b1508" stroke="#ff7500"/>
+    <text x="168" y="605" fill="#8a8f98">审议 / 确认闸门</text>
+    <rect x="300" y="596" width="14" height="10" rx="2" fill="#0e1a13" stroke="#3fbf6f"/>
+    <text x="322" y="605" fill="#8a8f98">成功终态</text>
+    <rect x="414" y="596" width="14" height="10" rx="2" fill="#1c1012" stroke="#ff5c5c"/>
+    <text x="436" y="605" fill="#8a8f98">取消终态</text>
+    <rect x="528" y="596" width="14" height="10" rx="2" fill="#1a1710" stroke="#d9a441"/>
+    <text x="550" y="605" fill="#8a8f98">阻塞</text>
+  </g>
+  <text x="34" y="672" fill="#5d636d" font-size="10.5">12 状态 · 终态 {Done, Cancelled} 无出边 · 门下省是架构内的强制质量闸门（不可跳过）</text>
+  <text x="34" y="692" fill="#5d636d" font-size="10.5">流程设计源自 cft0808/edict (MIT) · 实现：dsh-edict</text>
+</svg>
