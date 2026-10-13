@@ -2,6 +2,15 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.5] — 2026-10-14
+
+### 修复
+
+- **`last-load.json` 会被测试污染**：`writeLoadMarker` 之前总是写 `resolveDataDir()`（默认 `~/.dsh/edict`），
+  而测试里 `apply({ dataDir: tmp })` 用的是临时目录 —— 结果**测试跑一次就把真实环境的加载标记覆盖成假的**，
+  让人误判"插件已按新版本加载"。现在标记写入 `store.dir`（即 `config.dataDir`）。
+- 排查提示：该文件是**加载证据**，怀疑它不实时先确认它是谁写的。
+
 ## [0.1.4] — 2026-10-14
 
 ### 新增
