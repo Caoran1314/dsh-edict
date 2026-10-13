@@ -28,10 +28,13 @@
     "docs",
     "cordis.patch.yml",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "scripts"
   ],
   "scripts": {
-    "test": "node test/edict.test.mjs"
+    "test": "node test/edict.test.mjs",
+    "release": "node scripts/release.mjs",
+    "release:patch": "node scripts/release.mjs patch"
   },
   "dsh": {
     "bundle": {
