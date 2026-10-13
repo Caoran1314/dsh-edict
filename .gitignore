@@ -1,11 +1,21 @@
+# 依赖与产物
 node_modules/
+*.tgz
+
+# 凭据（绝不可提交）
+.npmrc
+.env
+
+# 运行数据
 .edict/
 data/
 *.log
-*.tgz
+
+# 编辑器与系统
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
-# Windows 保留设备名：git 的 ssh 调用若把 /dev/null 当普通路径，会生成同名的怪文件
+
+# Windows 保留设备名：git 的 ssh 调用若把 /dev/null 当普通路径，会生成同名怪文件
 NUL

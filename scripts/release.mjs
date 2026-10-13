@@ -110,13 +110,58 @@ if (fs.existsSync(clPath)) {
   log(`  ✓ 找到 [${VERSION}] 小节（${releaseNotes.length} 字符）`)
 } else log('  · 无 CHANGELOG.md，Release 正文用占位')
 
-/* ── 4. git commit + push ──────────────────────────────────────────── */
+/* ── 4. git 提交并推送 ──────────────────────────────────────────── */
 step(4, 'git 提交并推送')
 const st = git(['status', '--short'])
+
+/* ★ 安全闸门：绝不允许把凭据提交上去。
+   真实事故：本脚本用 `git add -A`，而发布过程中会临时写一个含 npm token 的 .npmrc
+   （虽然 .gitignore 里有 .npmrc，但只要它曾被跟踪过、或忽略规则被改动就会漏出去）。
+   GitHub 的 push protection 拦住了那次推送，但本地提交里确实带上了 token —— 靠人记得删不可靠，
+   所以在提交前主动扫描并拒绝。 */
+const FORBIDDEN_PATHS = ['.npmrc', '.env', 'id_rsa', 'id_ed25519', 'credentials.json']
+const SECRET_PATTERNS = [
+  [/\bnpm_[A-Za-z0-9]{20,}/, 'npm token'],
+  [/\bghp_[A-Za-z0-9]{20,}/, 'GitHub token (classic)'],
+  [/\bgithub_pat_[A-Za-z0-9_]{20,}/, 'GitHub token (fine-grained)'],
+  [/-----BEGIN [A-Z ]*PRIVATE KEY-----/, '私钥']
+]
+function assertNoSecrets(paths) {
+  const bad = []
+  for (const p of paths) {
+    const base = path.basename(p)
+    if (FORBIDDEN_PATHS.includes(base)) { bad.push(`${p} —— 凭据文件名（应加入 .gitignore）`); continue }
+    const full = path.join(ROOT, p)
+    if (!fs.existsSync(full) || fs.statSync(full).isDirectory()) continue
+    let text = ''
+    try { text = fs.readFileSync(full, 'utf8') } catch { continue }
+    for (const [re, label] of SECRET_PATTERNS) {
+      if (re.test(text)) { bad.push(`${p} —— 内含 ${label}`); break }
+    }
+  }
+  return bad
+}
+
 if (st.out.trim()) {
   log('  待提交:\n' + st.out.trim().split('\n').map((l) => '    ' + l).join('\n'))
   if (!DRY) {
     git(['add', '-A'])
+    /* 扫描**已暂存**的文件（这才是真正会被提交的内容） */
+    const staged = git(['diff', '--cached', '--name-only']).out.split('\n').map((s) => s.trim()).filter(Boolean)
+    const violations = assertNoSecrets(staged)
+    if (violations.length) {
+      git(['reset'])
+      fail('检测到凭据，已撤销暂存；请把下列文件加入 .gitignore 后重试:\n' +
+        violations.map((v) => '    ✗ ' + v).join('\n'))
+    }
+    /* 再兜底扫一遍完整补丁文本（防止多行/编码绕过） */
+    const patch = git(['diff', '--cached']).out
+    const patchHits = SECRET_PATTERNS.filter(([re]) => re.test(patch)).map(([, l]) => l)
+    if (patchHits.length) {
+      git(['reset'])
+      fail('暂存补丁里检测到凭据（' + patchHits.join(', ') + '），已撤销暂存')
+    }
+    log(`  ✓ 安全扫描通过（${staged.length} 个文件，无凭据）`)
     const c = git(['commit', '-m', `release: v${VERSION}`])
     if (c.code !== 0 && !/nothing to commit/.test(c.all)) fail('git commit 失败\n' + c.all)
     log('  ✓ 已提交')
@@ -159,9 +204,17 @@ else {
   else fail(`建 Release 失败 HTTP ${r.status}: ${t.slice(0, 200)}`)
 }
 
-/* ── 7. npm publish ───────────────────────────────────────────────── */
+/* ── 7. npm publish（幂等：版本已存在则跳过）───────────────────────── */
 step(7, 'npm publish')
-if (!process.env.NPM_TOKEN) log('  · 未设 NPM_TOKEN，跳过')
+const registryUrl = `https://registry.npmjs.org/${pkg.name}`
+let alreadyPublished = false
+try {
+  const r = await fetch(`${registryUrl}/${VERSION}?t=${Date.now()}`, { headers: { 'User-Agent': 'release-script', 'Cache-Control': 'no-cache' } })
+  alreadyPublished = r.status === 200
+} catch { /* 查不到就当未发布 */ }
+
+if (alreadyPublished) log(`  · ${pkg.name}@${VERSION} 已发布，跳过`)
+else if (!process.env.NPM_TOKEN) log('  · 未设 NPM_TOKEN，跳过')
 else if (DRY) log('  · dry：将执行 npm publish --access public')
 else {
   const npmrc = path.join(ROOT, '.npmrc')
@@ -170,9 +223,14 @@ else {
   fs.writeFileSync(npmrc, `//registry.npmjs.org/:_authToken=${process.env.NPM_TOKEN}\nregistry=https://registry.npmjs.org/\n`, 'ascii')
   try {
     const r = run(NODE, [NPM_CLI, 'publish', '--access', 'public', '--cache', 'D:/软件/_tools/npm-cache'])
-    const line = r.all.split('\n').find((l) => l.includes(`+ ${pkg.name}@`))
-    if (r.code !== 0) fail('npm publish 失败\n' + r.all.slice(-1200))
-    log('  ✓ ' + (line || 'published').trim())
+    if (r.code !== 0 && /previously published versions/i.test(r.all)) {
+      log('  · 版本已存在（并发/缓存），视为已发布')
+    } else if (r.code !== 0) {
+      fail('npm publish 失败\n' + r.all.slice(-1200))
+    } else {
+      const line = r.all.split('\n').find((l) => l.includes(`+ ${pkg.name}@`))
+      log('  ✓ ' + (line || 'published').trim())
+    }
   } finally {
     if (hadNpmrc) fs.writeFileSync(npmrc, backup, 'ascii'); else fs.rmSync(npmrc, { force: true })
   }
