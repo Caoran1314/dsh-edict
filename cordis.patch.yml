@@ -6,7 +6,7 @@
 # 安装（不手改 profile patch）：
 #   dsh plugin --profile desktop add dsh-edict
 # 本地开发安装：
-#   dsh plugin --profile desktop add link:D:\软件\dsh-edict
+#   dsh plugin --profile desktop add link:<你的目录>\dsh-edict
 - insert:
     - id: dsh-edict
       name: dsh-edict
